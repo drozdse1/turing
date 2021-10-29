@@ -1,30 +1,30 @@
-use std::time::Duration;
-use std::fmt::{Display, Formatter, Result};
-use std::collections::HashSet;
-use std::collections::{HashMap};
-use std::hash::{Hash, Hasher};
-use std::{thread,time};
 use log;
+use std::collections::HashMap;
+use std::collections::HashSet;
+use std::fmt::{Display, Formatter, Result};
+use std::hash::{Hash, Hasher};
+use std::time::Duration;
+use std::{thread, time};
 
 #[derive(PartialEq, Eq, Hash, Clone, Copy)]
 pub enum TapeMove {
     // An `enum` may either be `unit-like`,
     Left,
-    Right
+    Right,
 }
 
 impl Display for TapeMove {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         match self {
             TapeMove::Left => write!(f, "LEFT"),
-            TapeMove::Right => write!(f, "RIGHT")
+            TapeMove::Right => write!(f, "RIGHT"),
         }
     }
 }
 
 type Index = i32;
 
-pub struct TuringMachine<T>{
+pub struct TuringMachine<T> {
     pub blank_symbol: T,
     pub input_symbols: Vec<T>,
     pub tape_symbols: Vec<T>,
@@ -35,10 +35,13 @@ pub struct TuringMachine<T>{
     pub final_states: Vec<&'static str>,
     waiting_ms: Duration,
     clean_screen: bool,
-} 
+}
 
-impl<T> Hash for State<T> where T:Hash {
-    fn hash<H: Hasher>(&self, state: &mut H)  { 
+impl<T> Hash for State<T>
+where
+    T: Hash,
+{
+    fn hash<H: Hasher>(&self, state: &mut H) {
         self.tape_symbol.hash(state);
         self.name.hash(state);
     }
@@ -56,9 +59,12 @@ impl Display for TuringMachine<char> {
     }
 }
 
-impl<T> PartialEq for State<T> where T:PartialEq {
-    fn eq(&self, other: &State<T>) -> bool { 
-        self.tape_symbol == other.tape_symbol && self.name == other.name 
+impl<T> PartialEq for State<T>
+where
+    T: PartialEq,
+{
+    fn eq(&self, other: &State<T>) -> bool {
+        self.tape_symbol == other.tape_symbol && self.name == other.name
     }
 }
 
@@ -68,32 +74,58 @@ pub struct State<T> {
     pub tape_symbol: T,
     pub write_symbol: T,
     pub move_tape: TapeMove,
-    pub next_state: &'static str 
+    pub next_state: &'static str,
 }
 
 impl TuringMachine<char> {
     pub fn init() -> TuringMachine<char> {
         let mut _states = HashSet::new();
-        _states.insert(State {name: "q1", tape_symbol: '0', write_symbol: '1', move_tape: TapeMove::Left, next_state: "q2"});
-        _states.insert(State {name: "q2", tape_symbol: '0', write_symbol: '1', move_tape: TapeMove::Right, next_state: "q2"});
-        _states.insert(State {name: "q3", tape_symbol: '0', write_symbol: '1', move_tape: TapeMove::Left, next_state: "q3"});
+        _states.insert(State {
+            name: "q1",
+            tape_symbol: '0',
+            write_symbol: '1',
+            move_tape: TapeMove::Left,
+            next_state: "q2",
+        });
+        _states.insert(State {
+            name: "q2",
+            tape_symbol: '0',
+            write_symbol: '1',
+            move_tape: TapeMove::Right,
+            next_state: "q2",
+        });
+        _states.insert(State {
+            name: "q3",
+            tape_symbol: '0',
+            write_symbol: '1',
+            move_tape: TapeMove::Left,
+            next_state: "q3",
+        });
 
         let _tm: TuringMachine<char> = Self {
-            blank_symbol : '_',
-            input_symbols : vec!('1', '0'),
-            tape_symbols : vec!('0', '1', '_'),
+            blank_symbol: '_',
+            input_symbols: vec!['1', '0'],
+            tape_symbols: vec!['0', '1', '_'],
             states: _states,
-            current_state : "q1",
-            tape : HashMap::new(),
+            current_state: "q1",
+            tape: HashMap::new(),
             current_position: 0,
-            final_states: vec!("q3"),
+            final_states: vec!["q3"],
             waiting_ms: time::Duration::from_millis(50),
             clean_screen: true,
         };
-        return _tm;  
-    } 
+        return _tm;
+    }
 
-    pub fn new(blank_symbol: char, input_symbols: Vec<char>, tape_symbols: Vec<char>, states: &[State<char>], inital_state: &'static str, final_states: Vec<&'static str>, initial_tape: &'static str) -> TuringMachine<char> { 
+    pub fn new(
+        blank_symbol: char,
+        input_symbols: Vec<char>,
+        tape_symbols: Vec<char>,
+        states: &[State<char>],
+        inital_state: &'static str,
+        final_states: Vec<&'static str>,
+        initial_tape: &'static str,
+    ) -> TuringMachine<char> {
         let mut _states = HashSet::new();
 
         // build hashset based on array
@@ -102,12 +134,12 @@ impl TuringMachine<char> {
         }
 
         let mut _tm: TuringMachine<char> = Self {
-            blank_symbol : blank_symbol,
-            input_symbols : input_symbols,
-            tape_symbols : tape_symbols,
+            blank_symbol: blank_symbol,
+            input_symbols: input_symbols,
+            tape_symbols: tape_symbols,
             states: _states,
-            current_state : inital_state,
-            tape : HashMap::new(),
+            current_state: inital_state,
+            tape: HashMap::new(),
             current_position: 0,
             final_states: final_states,
             waiting_ms: time::Duration::from_millis(50),
@@ -115,7 +147,7 @@ impl TuringMachine<char> {
         };
 
         _tm.init_tape(initial_tape);
-        
+
         return _tm;
     }
 
@@ -131,12 +163,23 @@ impl TuringMachine<char> {
         if self.current_position < 0 {
             result = result + &format!("\n");
         } else {
-            result = result + &format!("{}{}\n", String::from(" ").repeat(self.relative_position()), "^");
+            result = result
+                + &format!(
+                    "{}{}\n",
+                    String::from(" ").repeat(self.relative_position()),
+                    "^"
+                );
         }
-        
 
         if detailed {
-            result = result + &format!("State:'{}, Pos: '{}, Next State:{}, Relative Pos.{}'\n", self.current_state, self.current_position, self.transition(),self.relative_position());
+            result = result
+                + &format!(
+                    "State:'{}, Pos: '{}, Next State:{}, Relative Pos.{}'\n",
+                    self.current_state,
+                    self.current_position,
+                    self.transition(),
+                    self.relative_position()
+                );
         }
         if seperator {
             result = result + &format!("{}\n", seperator_char.repeat(self.length() + 1));
@@ -146,17 +189,10 @@ impl TuringMachine<char> {
     }
 
     /* returns the length of the TM tape */
-    pub fn length(&self) -> usize { 
-        return (
-            self.tape.keys()
-                .max()
-                .unwrap_or(&0)         
-            - self.tape.keys()
-                .min()
-                .unwrap_or(&0)
-        ) as usize;
-     }
-
+    pub fn length(&self) -> usize {
+        return (self.tape.keys().max().unwrap_or(&0) - self.tape.keys().min().unwrap_or(&0))
+            as usize;
+    }
 
     fn init_tape(&mut self, tape_string: &str) {
         self.tape = HashMap::new();
@@ -173,15 +209,14 @@ impl TuringMachine<char> {
     pub fn move_head(&mut self, direction: TapeMove) {
         match direction {
             TapeMove::Left => self.current_position -= 1,
-            TapeMove::Right => self.current_position += 1
+            TapeMove::Right => self.current_position += 1,
         }
     }
 
-    pub fn read_head(&self) -> char
-    {
+    pub fn read_head(&self) -> char {
         match self.tape.get(&self.current_position) {
             Some(symbol) => *symbol,
-            None => self.blank_symbol
+            None => self.blank_symbol,
         }
     }
 
@@ -189,14 +224,12 @@ impl TuringMachine<char> {
         self.tape.insert(self.current_position, symbol);
     }
 
-    fn step(&mut self) -> bool{
+    fn step(&mut self) -> bool {
         let current_state = self.state(self.current_state, self.read_head());
 
         let next_state = self.transition();
-        let write_symbol = current_state.write_symbol ;
+        let write_symbol = current_state.write_symbol;
         let tape_move = current_state.move_tape;
-
-
 
         // alter machine == begin
         self.current_state = next_state;
@@ -208,7 +241,12 @@ impl TuringMachine<char> {
             return false;
         }
 
-        log::debug!("Tape moved {} to State: [{}] and wrote Symbol [{}]", &tape_move, self.current_state, &write_symbol);
+        log::debug!(
+            "Tape moved {} to State: [{}] and wrote Symbol [{}]",
+            &tape_move,
+            self.current_state,
+            &write_symbol
+        );
 
         if self.clean_screen {
             print!("{esc}c", esc = 27 as char);
@@ -220,16 +258,21 @@ impl TuringMachine<char> {
     }
 
     fn state(&self, name: &'static str, tape_symbol: char) -> &State<char> {
-         // todo: currently need to create an complete State object for indexing hashset 
-        let state = self.states.get(&State{name: name, tape_symbol: tape_symbol, write_symbol: '0', move_tape: TapeMove::Left, next_state: "q3"});
-        
+        // todo: currently need to create an complete State object for indexing hashset
+        let state = self.states.get(&State {
+            name: name,
+            tape_symbol: tape_symbol,
+            write_symbol: '0',
+            move_tape: TapeMove::Left,
+            next_state: "q3",
+        });
+
         match state {
-            Some(item) => {return item},
+            Some(item) => return item,
             None => panic!("State:'{}' not found for '{}'", name, tape_symbol),
         }
-
     }
-    
+
     fn transition(&self) -> &'static str {
         let current_symbol = self.read_head();
 
@@ -241,55 +284,42 @@ impl TuringMachine<char> {
         return state.next_state;
     }
 
-    pub fn print_tape_status(&self) {
+    pub fn print_tape_status(&self) {}
 
-    }
-
-    pub fn run(&mut self) ->  &'static str {
-
+    pub fn run(&mut self) -> &'static str {
         while self.step() {
             thread::sleep(self.waiting_ms);
         }
 
         return self.current_state;
-
     }
 
     pub fn show_tape(&self) -> String {
         let mut result = String::new();
 
-        let max_pos = self.tape.keys()
-                               .max()
-                               .unwrap_or(&0);
+        let max_pos = self.tape.keys().max().unwrap_or(&0);
 
-        let min_pos = self.tape.keys()
-                               .min()
-                               .unwrap_or(&0);
+        let min_pos = self.tape.keys().min().unwrap_or(&0);
 
         // iiterate through min to max position
-        for pos in *min_pos ..= *max_pos {
+        for pos in *min_pos..=*max_pos {
             result.push(*self.tape.get(&pos).unwrap_or(&self.blank_symbol))
-        } 
+        }
 
         return result;
     }
 
     pub fn relative_position(&self) -> usize {
-        return (
-            self.current_position    
-            - self.tape.keys()
-                .min()
-                .unwrap_or(&0)
-        ) as usize;
+        return (self.current_position - self.tape.keys().min().unwrap_or(&0)) as usize;
     }
 }
 
 #[cfg(test)]
 mod tests {
-use std::collections::HashSet;
-use crate::tm::State;
-use crate::tm::{TuringMachine, TapeMove};
-    
+    use crate::tm::State;
+    use crate::tm::{TapeMove, TuringMachine};
+    use std::collections::HashSet;
+
     #[test]
     fn test1() {
         let mut test = TuringMachine::init();
@@ -315,18 +345,23 @@ use crate::tm::{TuringMachine, TapeMove};
 
     #[test]
     fn test2() {
-        let _states = [
-            State {name: "q1", tape_symbol: '_', write_symbol: '0', move_tape: TapeMove::Right, next_state: "q2"}
-         ];
+        let _states = [State {
+            name: "q1",
+            tape_symbol: '_',
+            write_symbol: '0',
+            move_tape: TapeMove::Right,
+            next_state: "q2",
+        }];
 
         let mut test = TuringMachine::new(
             '_',
-            vec!('1', '0'),
-            vec!('0', '1', '_'),
+            vec!['1', '0'],
+            vec!['0', '1', '_'],
             &_states,
             "q1",
-            vec!("q1"),
-            "");
+            vec!["q1"],
+            "",
+        );
 
         assert_eq!(test.read_head(), '_');
         test.write_head('0');
@@ -348,20 +383,18 @@ use crate::tm::{TuringMachine, TapeMove};
 
         test.move_head(TapeMove::Right);
         assert_eq!(test.read_head(), '0');
-        
-        assert_eq!(test.current_position, 0);
-        
-        assert_eq!(test.relative_position(), 2);
-        
-    }
 
+        assert_eq!(test.current_position, 0);
+
+        assert_eq!(test.relative_position(), 2);
+    }
 
     #[test]
     fn simple_check() {
         let mut test = TuringMachine::init();
 
         test.init_tape("0101");
-        
+
         assert_eq!(test.show_tape(), String::from("0101"))
     }
 
@@ -378,46 +411,83 @@ use crate::tm::{TuringMachine, TapeMove};
         test.write_head('1');
         test.move_head(TapeMove::Right);
         test.write_head('1');
-       
+
         assert_eq!(test.show_tape(), String::from("11 0"))
     }
 
-      
     #[test]
     fn check_if_states_are_distinct() {
         let mut test = TuringMachine::init();
 
         // should add new state
-        test.states.insert(State {name: "q1", tape_symbol: '1', write_symbol: '1', move_tape: TapeMove::Left, next_state: "q2"});
+        test.states.insert(State {
+            name: "q1",
+            tape_symbol: '1',
+            write_symbol: '1',
+            move_tape: TapeMove::Left,
+            next_state: "q2",
+        });
 
         assert_eq!(test.states.len(), 4);
-        
+
         // should override existing state
-        test.states.insert(State {name: "q1", tape_symbol: '0', write_symbol: '0', move_tape: TapeMove::Right, next_state: "q9"});
+        test.states.insert(State {
+            name: "q1",
+            tape_symbol: '0',
+            write_symbol: '0',
+            move_tape: TapeMove::Right,
+            next_state: "q9",
+        });
 
         assert_eq!(test.states.len(), 4);
     }
 
     #[test]
     fn test_transition() {
-
         let _states = [
-            State {name: "q1", tape_symbol: '_', write_symbol: '0', move_tape: TapeMove::Right, next_state: "q2"}, 
-            State {name: "q2", tape_symbol: '_', write_symbol: '0', move_tape: TapeMove::Right, next_state: "q3"},
-            State {name: "q3", tape_symbol: '_', write_symbol: '0', move_tape: TapeMove::Right, next_state: "q4"}
+            State {
+                name: "q1",
+                tape_symbol: '_',
+                write_symbol: '0',
+                move_tape: TapeMove::Right,
+                next_state: "q2",
+            },
+            State {
+                name: "q2",
+                tape_symbol: '_',
+                write_symbol: '0',
+                move_tape: TapeMove::Right,
+                next_state: "q3",
+            },
+            State {
+                name: "q3",
+                tape_symbol: '_',
+                write_symbol: '0',
+                move_tape: TapeMove::Right,
+                next_state: "q4",
+            },
         ];
 
         let mut test = TuringMachine::new(
             '_',
-            vec!('1', '0'),
-            vec!('0', '1', '_'),
+            vec!['1', '0'],
+            vec!['0', '1', '_'],
             &_states,
             "q1",
-            vec!("q4"),
-            "_");
+            vec!["q4"],
+            "_",
+        );
 
         assert_eq!(
-            test.states.contains(&crate::tm::State{name: "q1", tape_symbol: '_', write_symbol: '0', move_tape: TapeMove::Left, next_state: "q3"}), true);
+            test.states.contains(&crate::tm::State {
+                name: "q1",
+                tape_symbol: '_',
+                write_symbol: '0',
+                move_tape: TapeMove::Left,
+                next_state: "q3"
+            }),
+            true
+        );
 
         test.step();
 
@@ -430,9 +500,8 @@ use crate::tm::{TuringMachine, TapeMove};
         assert_eq!(test.current_state, "q3");
 
         test.step();
-        
+
         assert_eq!(test.current_position, 3);
         assert_eq!(test.current_state, "q4");
- 
     }
 }
